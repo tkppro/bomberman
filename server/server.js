@@ -1,9 +1,8 @@
-import Gameboard from "./game_classes/gameboard";
-
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
+const Gameboard = require("./game_classes/gameboard");
 
 const app = express();
 const server = http.createServer(app);
@@ -28,19 +27,17 @@ app.use(
 
 const GRID_COLUMNS = 15;
 const GRID_ROWS = 15;
+const BOMB_TIMING = 3000; // bomb timing explosion
+// let players = {};
 
-let players = {};
-const getRandomBinary = () => {
-  return Math.floor(Math.random() * 3);
-};
-let gameBoard = new Gameboard(GRID_ROWS, GRID_COLUMNS);
+const gameBoard = new Gameboard(GRID_ROWS, GRID_COLUMNS);
+let players = gameBoard.players;
 
 let grid = gameBoard.grid;
 
 io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
-  players[socket.id] = { x: 0, y: 0, id: socket.id };
-  console.log("INITIAL GRID, ", grid);
+  gameBoard.addPlayer(socket.id);
+
   // Send current grid state to new player
   socket.emit("currentGrid", grid);
 
@@ -49,6 +46,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+    if (Object.keys(players).length == 1) gameBoard.cleanOccupied();
     delete players[socket.id];
     io.emit("playerDisconnected", socket.id);
   });
@@ -65,18 +63,18 @@ io.on("connection", (socket) => {
     io.emit("bombPlaced", bomb);
     row = bomb.x;
     col = bomb.y;
-    grid[row][col] = 3; // 3 represents bomb
+    grid[row][col] = 2; // 2 represents bomb
     console.log("PLACED BOMB AT: ", row, col);
-    io.emit("updateGrid", { row, col, value: 3 });
+    io.emit("updateGrid", { row, col, value: 2 });
     setTimeout(() => {
       io.emit("bombExploded", bomb);
-    }, 3000); // Bomb explodes after 3 seconds
+    }, BOMB_TIMING); // Bomb explodes after 3 seconds
   });
 
-  socket.on("placeObstacle", ({ row, col }) => {
-    grid[row][col] = 1; // 1 represents obstacle
-    io.emit("updateGrid", { row, col, value: 1 });
-  });
+  // socket.on("placeObstacle", ({ row, col }) => {
+  //   grid[row][col] = 1; // 1 represents obstacle
+  //   io.emit("updateGrid", { row, col, value: 1 });
+  // });
 });
 
 server.listen(3000, () => {

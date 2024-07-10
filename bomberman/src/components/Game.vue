@@ -8,7 +8,7 @@
         top: Math.floor(index / GRID_COLUMNS) * cellSize + 'px',
       }"
       class="cell"
-      :class="{ obstacle: cell === 1, bomb: cell === 3 }"
+      :class="{ obstacle: cell === 1, bomb: cell === 2 }"
     ></div>
     <div
       v-for="player in players"
@@ -20,7 +20,7 @@
       class="player"
     >
       <img :src="player.spriteUrl" alt="Player" />
-      {{ player.id[1] }}
+      {{ player.id }}
     </div>
   </div>
 </template>
@@ -30,7 +30,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import Player from "../game/classes/player.js";
 import Bomb from "../game/classes/bomb.js";
 import Gameboard from "../game/classes/gameboard.js";
-import obstacle from "../game/classes/obstacle.js";
+import Obstacle from "../game/classes/obstacle.js";
 
 import socket from "../socket";
 
@@ -42,12 +42,7 @@ export default {
     const cellSize = 40;
     const BOMB_EXPLOSION_RANGE = 1;
 
-    const grid = ref(
-      Array(GRID_ROWS)
-        .fill()
-        .map(() => Array(GRID_COLUMNS).fill(0))
-    );
-
+    const grid = ref();
     const players = ref({});
     const playerId = ref(null);
 
@@ -57,10 +52,12 @@ export default {
 
     socket.on("currentGrid", (gridData) => {
       grid.value = gridData;
+      console.log(gridData);
     });
 
     socket.on("updateGrid", ({ row, col, value }) => {
-      grid.value[row][col] = value;
+      console.log("GRID changed, ");
+      grid.value[getGridIndex(row, col)] = value;
     });
 
     socket.on("newPlayer", (player) => {
@@ -75,7 +72,7 @@ export default {
       const index = getGridIndex(player.x, player.y);
       grid.value[index] = 0;
     }
-    console.log(grid.value);
+
     socket.on("playerDisconnected", (id) => {
       const { [id]: _, ...rest } = players.value;
       players.value = rest;
@@ -196,7 +193,8 @@ export default {
 }
 
 .obstacle {
-  background: #f70b0b;
+  /* background: #f70b0b; */
+  background-image: repeating-linear-gradient(45deg, black, transparent 100px);
 }
 .bomb {
   background: blue;
@@ -205,7 +203,7 @@ export default {
   position: absolute;
   width: 40px;
   height: 40px;
-  background: #000;
+  background: red;
   color: #fff;
   display: flex;
   justify-content: center;

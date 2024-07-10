@@ -18,5 +18,7 @@ export default {
 <style>
 #app {
   text-align: center;
+  background-image: url("assets/boom-background.jpg");
+  background-position-y: center;
 }
 </style>

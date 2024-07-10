@@ -1,5 +1,5 @@
 export default class Player {
-  constructor(id, name, x, y, spriteUrl) {
+  constructor(id, name, x, y) {
     this.id = id; // Player ID
     this.name = name; // Player name
     this.x = x; // Current x position
@@ -8,7 +8,7 @@ export default class Player {
     this.power = 1; // Bomb power level
     this.maxBombs = 1; // Maximum bombs player can place at once
     this.speed = 1; // Player movement speed
-    this.spriteUrl = "/assets/player.png"; // URL to the player's sprite image
+    this.img = "/assets/player.png"; // URL to the player's sprite image
   }
 
   move(direction) {

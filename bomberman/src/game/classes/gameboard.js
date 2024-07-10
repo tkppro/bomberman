@@ -1,5 +1,6 @@
 export default class Gameboard {
-  constructor(width, height) {
+  constructor(width, height, grid) {
+    this.grid = grid;
     this.width = width; // Width of the game board
     this.height = height; // Height of the game board
     this.obstacles = []; // Array to store obstacles on the game board

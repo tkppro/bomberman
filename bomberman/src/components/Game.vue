@@ -1,5 +1,6 @@
 <template>
   <div id="gameArea">
+    <background-music />
     <div
       v-for="(cell, index) in grid"
       :key="index"
@@ -9,6 +10,7 @@
       }"
       class="cell"
       :class="{
+        floor: cell === 0,
         obstacle: cell === 1,
         bomb: cell === 2,
       }"
@@ -22,7 +24,6 @@
       }"
       class="player"
     >
-      <img :src="player.img" alt="Player" />
       {{ player.id }}
     </div>
   </div>
@@ -36,31 +37,20 @@ import Gameboard from "../game/classes/gameboard.js";
 import Obstacle from "../game/classes/obstacle.js";
 
 import socket from "../socket";
+import BackgroundMusic from "./BackgroundMusic.vue";
 
 export default {
+  components: { BackgroundMusic },
   name: "Game",
   setup() {
     const GRID_ROWS = 15;
     const GRID_COLUMNS = 15;
     const cellSize = 40;
     const BOMB_EXPLOSION_RANGE = 1;
-    const colors = [
-      "red",
-      "blue",
-      "green",
-      "teal",
-      "rosybrown",
-      "tan",
-      "plum",
-      "saddlebrown",
-    ];
     const grid = ref();
     const players = ref({});
     const playerId = ref(null);
-    const getBombColor = () => {
-      return colors[Math.floor(Math.random() * colors.length)];
-    };
-    const bombColor = getBombColor();
+
     socket.on("currentPlayers", (playersData) => {
       players.value = playersData;
     });
@@ -125,6 +115,7 @@ export default {
       if (grid[getGridIndex(row, col)] === 0) return;
       else if (grid[getGridIndex(row, col)] === 1) {
         console.log("DESTROY obstacle at position ", getGridIndex(row, col));
+        grid.value[getGridIndex(row, col)] = 0;
         socket.emit("updateGrid", { row, col, value: 0 });
       }
     };
@@ -196,7 +187,8 @@ export default {
   position: relative;
   width: 600px;
   height: 600px;
-  background: #ccc;
+  /* background: #ccc; */
+  background-image: url("assets/game_assets/map_files/");
   display: flex;
   flex-wrap: wrap;
 }
@@ -206,23 +198,34 @@ export default {
   height: 40px;
 }
 
-.obstacle {
-  /* background: #f70b0b; */
-  background-image: repeating-linear-gradient(45deg, black, transparent 100px);
+.floor {
+  background-size: 40px 40px;
+  background-image: url("../assets/game_assets/map_asset/desert/floor.png");
 }
+
+.obstacle {
+  background-size: 40px 40px;
+  background-image: url("../assets/game_assets/map_asset/desert/stone.png");
+}
+
 .bomb {
-  /* color: v-bind("bombColor"); */
-  background-color: blue;
+  background-size: 40px 40px;
+  background-image: url("../assets/game_assets/bomb/xmas_bomb.png");
   border-radius: 20px;
 }
+
 .player {
   position: absolute;
   width: 40px;
   height: 40px;
-  background: red;
+  /* background: red; */
+  background-image: url("../assets/game_assets/character/boz.png");
+  background-position: 2px 0px;
+  background-size: 200px 200px;
   color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
+  transition-timing-function: ease-out;
 }
 </style>

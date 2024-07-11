@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <Game />
+    <div id="container">
+      <Game />
+    </div>
   </div>
 </template>
 
@@ -18,7 +20,8 @@ export default {
 <style>
 #app {
   text-align: center;
-  background-image: url("assets/boom-background.jpg");
-  background-position-y: center;
+  display: flex;
+  /* background-image: url("assets/boom-background.jpg"); */
+  /* background-position-y: center; */
 }
 </style>

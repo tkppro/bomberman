@@ -3,12 +3,13 @@ const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const Gameboard = require("./game_classes/gameboard");
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173", // Your frontend URL
+    origin: process.env.HOST_NAME, // Your frontend URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
@@ -18,7 +19,7 @@ const io = socketIo(server, {
 // Use CORS middleware
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your frontend URL
+    origin: process.env.HOST_NAME, // Your frontend URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
@@ -52,18 +53,28 @@ io.on("connection", (socket) => {
   });
 
   socket.on("playerMovement", (movementData) => {
-    if (players[socket.id]) {
-      players[socket.id].x = movementData.x;
-      players[socket.id].y = movementData.y;
-      socket.broadcast.emit("playerMoved", players[socket.id]);
+    if (players[movementData.id]) {
+      if (gameBoard.checkPlayerMove(movementData)) {
+        players[movementData.id].x = movementData.x;
+        players[movementData.id].y = movementData.y;
+        console.log("User can move , id ", movementData.id, " ", movementData);
+        socket.broadcast.emit("playerMoved", {
+          id: movementData.id,
+          ...movementData,
+        });
+        socket.emit("playerMoved", {
+          id: movementData.id,
+          ...movementData,
+        });
+      }
     }
   });
 
   socket.on("placeBomb", (bomb) => {
     io.emit("bombPlaced", bomb);
-    row = bomb.x;
-    col = bomb.y;
-    grid[row][col] = 2; // 2 represents bomb
+    let row = bomb.x;
+    let col = bomb.y;
+    grid[gameBoard.getIndex(row, col)] = 2; // 2 represents bomb
     console.log("PLACED BOMB AT: ", row, col);
     io.emit("updateGrid", { row, col, value: 2 });
     setTimeout(() => {
@@ -72,7 +83,7 @@ io.on("connection", (socket) => {
   });
 
   // socket.on("placeObstacle", ({ row, col }) => {
-  //   grid[row][col] = 1; // 1 represents obstacle
+  //   grid[gameBoard.getIndex(row, col)] = 1; // 1 represents obstacle
   //   io.emit("updateGrid", { row, col, value: 1 });
   // });
 });

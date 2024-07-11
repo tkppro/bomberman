@@ -29,6 +29,15 @@ class Gameboard {
     return row * this.cols + col;
   }
 
+  checkPlayerMove(movementData) {
+    let row = movementData.y;
+    let col = movementData.x;
+    let cell = this.grid[this.getIndex(row, col)];
+    console.log("CELL: ", cell);
+    if (cell !== 0) return false;
+    return true;
+  }
+
   isValidPosition(row, col) {
     // Check if the position itself is valid
     if (

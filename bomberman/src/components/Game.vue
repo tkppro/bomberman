@@ -8,7 +8,10 @@
         top: Math.floor(index / GRID_COLUMNS) * cellSize + 'px',
       }"
       class="cell"
-      :class="{ obstacle: cell === 1, bomb: cell === 2 }"
+      :class="{
+        obstacle: cell === 1,
+        bomb: cell === 2,
+      }"
     ></div>
     <div
       v-for="player in players"
@@ -19,7 +22,7 @@
       }"
       class="player"
     >
-      <img :src="player.spriteUrl" alt="Player" />
+      <img :src="player.img" alt="Player" />
       {{ player.id }}
     </div>
   </div>
@@ -41,22 +44,32 @@ export default {
     const GRID_COLUMNS = 15;
     const cellSize = 40;
     const BOMB_EXPLOSION_RANGE = 1;
-
+    const colors = [
+      "red",
+      "blue",
+      "green",
+      "teal",
+      "rosybrown",
+      "tan",
+      "plum",
+      "saddlebrown",
+    ];
     const grid = ref();
     const players = ref({});
     const playerId = ref(null);
-
+    const getBombColor = () => {
+      return colors[Math.floor(Math.random() * colors.length)];
+    };
+    const bombColor = getBombColor();
     socket.on("currentPlayers", (playersData) => {
       players.value = playersData;
     });
 
     socket.on("currentGrid", (gridData) => {
       grid.value = gridData;
-      console.log(gridData);
     });
 
     socket.on("updateGrid", ({ row, col, value }) => {
-      console.log("GRID changed, ");
       grid.value[getGridIndex(row, col)] = value;
     });
 
@@ -78,8 +91,10 @@ export default {
       players.value = rest;
     });
 
-    socket.on("playerMoved", (player) => {
-      players.value = { ...players.value, [player.id]: player };
+    socket.on("playerMoved", (movementData) => {
+      console.log("Player can move ", movementData);
+      players.value[movementData.id].x = movementData.x;
+      players.value[movementData.id].y = movementData.y;
     });
 
     const handleBombPlacement = () => {
@@ -89,7 +104,7 @@ export default {
         "User " + socket.id + " has placed bomb at x: " + player.x,
         ", y: " + player.y
       );
-      grid.value[getGridIndex(player.x, player.y)] = 3;
+      grid.value[getGridIndex(player.x, player.y)] = 2;
       const bomb = { x: player.x, y: player.y, id: socket.id };
       socket.emit("placeBomb", bomb);
     };
@@ -107,8 +122,9 @@ export default {
       if (isNaN(row) || isNaN(col)) return;
       if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLUMNS) return;
 
-      if (grid[row][col] === 0) return;
-      else if (grid[row][col] === 1) {
+      if (grid[getGridIndex(row, col)] === 0) return;
+      else if (grid[getGridIndex(row, col)] === 1) {
+        console.log("DESTROY obstacle at position ", getGridIndex(row, col));
         socket.emit("updateGrid", { row, col, value: 0 });
       }
     };
@@ -148,9 +164,7 @@ export default {
           break;
       }
 
-      players.value[socket.id].x = x;
-      players.value[socket.id].y = y;
-      socket.emit("playerMovement", { x, y });
+      socket.emit("playerMovement", { id: socket.id, x, y });
     };
 
     onMounted(() => {
@@ -197,7 +211,9 @@ export default {
   background-image: repeating-linear-gradient(45deg, black, transparent 100px);
 }
 .bomb {
-  background: blue;
+  /* color: v-bind("bombColor"); */
+  background-color: blue;
+  border-radius: 20px;
 }
 .player {
   position: absolute;

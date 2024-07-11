@@ -24,4 +24,7 @@ export default {
   /* background-image: url("assets/boom-background.jpg"); */
   /* background-position-y: center; */
 }
+#container {
+  background-color: #5ba9da;
+}
 </style>

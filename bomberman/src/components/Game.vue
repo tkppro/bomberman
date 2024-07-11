@@ -200,13 +200,24 @@ export default {
 
 .floor {
   background-size: 40px 40px;
-  background-image: url("../assets/game_assets/map_asset/desert/floor.png");
+  background-image: url("../assets/game_assets/map_asset/xmas/floor.png");
 }
 
 .obstacle {
   background-size: 40px 40px;
-  background-image: url("../assets/game_assets/map_asset/desert/stone.png");
 }
+
+.obstacle {
+  background-image: url("../assets/game_assets/map_asset/xmas/stone.png");
+}
+/* 
+.obstacle .gift {
+  background-image: url("../assets/game_assets/map_asset/xmas/gift_box.png");
+}
+
+.obstacle .brick {
+  background-image: url("../assets/game_assets/map_asset/xmas/brick.png");
+} */
 
 .bomb {
   background-size: 40px 40px;

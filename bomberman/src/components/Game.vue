@@ -1,6 +1,6 @@
 <template>
   <div id="gameArea">
-    <background-music />
+    <!-- <background-music /> -->
     <div
       v-for="(cell, index) in grid"
       :key="index"
@@ -60,7 +60,7 @@ export default {
     });
 
     socket.on("updateGrid", ({ row, col, value }) => {
-      grid.value[getGridIndex(row, col)] = value;
+      grid.value[getGridIndex(col, row)] = value;
     });
 
     socket.on("newPlayer", (player) => {
@@ -81,8 +81,15 @@ export default {
       players.value = rest;
     });
 
+    socket.on("playerLose", (id) => {
+      const { [id]: _, ...rest } = players.value;
+      players.value = rest;
+      if (socket.id === id) {
+        alert("You lose!");
+      }
+    });
+
     socket.on("playerMoved", (movementData) => {
-      console.log("Player can move ", movementData);
       players.value[movementData.id].x = movementData.x;
       players.value[movementData.id].y = movementData.y;
     });
@@ -90,47 +97,17 @@ export default {
     const handleBombPlacement = () => {
       const player = players.value[socket.id];
       if (!player) return;
-      console.log(
-        "User " + socket.id + " has placed bomb at x: " + player.x,
-        ", y: " + player.y
-      );
+
       grid.value[getGridIndex(player.x, player.y)] = 2;
       const bomb = { x: player.x, y: player.y, id: socket.id };
       socket.emit("placeBomb", bomb);
     };
 
-    const bombExplosion = (row, col) => {
-      Array.from({ length: BOMB_EXPLOSION_RANGE }, (x, i) => {
-        let _range = i + 1;
-        _checkBombExplosion(row + _range, col);
-        _checkBombExplosion(row - _range, col);
-        _checkBombExplosion(row, col + _range);
-        _checkBombExplosion(row, col - _range);
-      });
-    };
-    const _checkBombExplosion = (row, col) => {
-      if (isNaN(row) || isNaN(col)) return;
-      if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLUMNS) return;
-
-      if (grid[getGridIndex(row, col)] === 0) return;
-      else if (grid[getGridIndex(row, col)] === 1) {
-        console.log("DESTROY obstacle at position ", getGridIndex(row, col));
-        grid.value[getGridIndex(row, col)] = 0;
-        socket.emit("updateGrid", { row, col, value: 0 });
+    const handleBombExplosion = (bomb) => {
+      for (const value of bomb) {
+        grid.value[getGridIndex(value.x, value.y)] = 0;
       }
     };
-
-    const handleBombExplosion = (bomb) => {
-      bombExplosion(bomb.x, bomb.y);
-      // Logic for handling bomb explosion
-      // Remove players and obstacles in the explosion radius
-    };
-
-    socket.on("bombPlaced", (bomb) => {
-      const player = players.value[socket.id];
-
-      // Handle bomb placement on the grid
-    });
 
     socket.on("bombExploded", (bomb) => {
       handleBombExplosion(bomb);
@@ -139,23 +116,27 @@ export default {
     const handleMovement = (event) => {
       let x = players.value[socket.id].x;
       let y = players.value[socket.id].y;
-
+      let direct = "";
       switch (event.key) {
         case "ArrowUp":
           y = Math.max(0, y - 1);
+          direct = "up";
           break;
         case "ArrowDown":
           y = Math.min(GRID_ROWS - 1, y + 1);
+          direct = "down";
           break;
         case "ArrowLeft":
           x = Math.max(0, x - 1);
+          direct = "left";
           break;
         case "ArrowRight":
           x = Math.min(GRID_COLUMNS - 1, x + 1);
+          direct = "right";
           break;
       }
 
-      socket.emit("playerMovement", { id: socket.id, x, y });
+      socket.emit("playerMovement", { id: socket.id, direct: direct, x, y });
     };
 
     onMounted(() => {
@@ -196,6 +177,7 @@ export default {
 .cell {
   width: 40px;
   height: 40px;
+  animation: assetAnim 2s 1 forwards;
 }
 
 .floor {

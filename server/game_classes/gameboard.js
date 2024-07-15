@@ -10,17 +10,10 @@ class Gameboard {
     this.occupied = new Set();
   }
 
-  addObstacle(x, y) {
-    // Code to add an obstacle at the specified position
+  resetGrid() {
+    this.grid = Array.from({ length: rows * cols }, this.getRandomBinary);
   }
 
-  removeObstacle(x, y) {
-    // Code to remove an obstacle from the specified position
-  }
-
-  checkCollision(x, y) {
-    // Code to check for collisions with obstacles or other players
-  }
   getRandomBinary() {
     return Math.floor(Math.random() * 2);
   }
@@ -33,7 +26,6 @@ class Gameboard {
     let row = movementData.y;
     let col = movementData.x;
     let cell = this.grid[this.getIndex(row, col)];
-    console.log("CELL: ", cell);
     if (cell !== 0) return false;
     return true;
   }
@@ -107,6 +99,71 @@ class Gameboard {
   }
   cleanOccupied() {
     this.occupied = new Set();
+  }
+
+  getDestroyedCellByBomb(bomb, explosionRange) {
+    let row = bomb.y;
+    let col = bomb.x;
+    let destroyCells = new Set();
+    destroyCells.add({ x: col, y: row });
+    let top = false;
+    let down = false;
+    let left = false;
+    let right = false;
+    let userDeaths = new Set();
+    Array.from({ length: explosionRange }, (x, i) => {
+      let _range = i + 1;
+      if (!down)
+        down = this._checkBombExplosion(
+          row + _range,
+          col,
+          destroyCells,
+          userDeaths
+        );
+      if (!top)
+        top = this._checkBombExplosion(
+          row - _range,
+          col,
+          destroyCells,
+          userDeaths
+        );
+      if (!right)
+        right = this._checkBombExplosion(
+          row,
+          col + _range,
+          destroyCells,
+          userDeaths
+        );
+      if (!left)
+        left = this._checkBombExplosion(
+          row,
+          col - _range,
+          destroyCells,
+          userDeaths
+        );
+    });
+
+    return { destroyCells, userDeaths };
+  }
+
+  _checkBombExplosion(row, col, destroyCells, userDeaths) {
+    if (isNaN(row) || isNaN(col)) return false;
+    if (row < 0 || row >= this.rows || col < 0 || col >= this.cols)
+      return false;
+    // check player in range of explosion
+    for (const [key, value] of Object.entries(this.players)) {
+      if (value.x === col && value.y === row) {
+        userDeaths.add({ x: col, y: row, id: key });
+        console.log("USER ID : ", key, " died");
+      }
+    }
+
+    if (this.grid[this.getIndex(row, col)] === 0) return false;
+    else if (this.grid[this.getIndex(row, col)] === 1) {
+      this.grid[this.getIndex(row, col)] = 0;
+      destroyCells.add({ x: col, y: row });
+    }
+    return true;
   }
 }
 
